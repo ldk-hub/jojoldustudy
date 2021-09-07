@@ -16,7 +16,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(SpringExtension.class) //(1)
-@WebMvcTest //(2)
+@WebMvcTest(controllers = HelloController.class) //Controller만 테스트 & HelloController 만 테스트
 public class HelloControllerTest {
     @Autowired // (3)
     private MockMvc mvc; //(4)
