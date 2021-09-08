@@ -1,9 +1,12 @@
 package com.koscom.springboot.web;
 
+import com.koscom.springboot.domain.posts.Posts;
+import com.koscom.springboot.web.dto.posts.PostsResponseDto;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -55,4 +58,6 @@ public class HelloControllerTest {
                         .param("name", name))
                 .andExpect(status().isBadRequest());
     }
+
+
 }
