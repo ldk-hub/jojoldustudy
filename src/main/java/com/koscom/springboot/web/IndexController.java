@@ -1,6 +1,7 @@
 package com.koscom.springboot.web;
 
 import com.koscom.springboot.config.auth.dto.SessionUser;
+import com.koscom.springboot.config.auth.login.LoginUser;
 import com.koscom.springboot.service.PostsService;
 import com.koscom.springboot.web.dto.posts.PostsResponseDto;
 import com.koscom.springboot.web.dto.posts.PostsSaveRequestDto;
@@ -18,15 +19,25 @@ import javax.servlet.http.HttpSession;
 public class IndexController {
 
        private final PostsService postsService;
-    private final HttpSession httpSession;
+    //private final HttpSession httpSession;
 
+//    @GetMapping("/")
+//    public String index(Model model) {
+//        postsService.save(new PostsSaveRequestDto("test", "test", "test"));
+//        model.addAttribute("posts", postsService.findAllDesc());
+//
+//        SessionUser user = (SessionUser) httpSession.getAttribute("user"); // (1)
+//        if (user != null) { // (2)
+//            model.addAttribute("userName", user.getName());
+//        }
+//        return "index";
+//    }
+    
+    //어노테이션 추가해서
     @GetMapping("/")
-    public String index(Model model) {
-        postsService.save(new PostsSaveRequestDto("test", "test", "test"));
+    public String index(Model model, @LoginUser SessionUser user) { // (1)
         model.addAttribute("posts", postsService.findAllDesc());
-
-        SessionUser user = (SessionUser) httpSession.getAttribute("user"); // (1)
-        if (user != null) { // (2)
+        if (user != null) {
             model.addAttribute("userName", user.getName());
         }
         return "index";
