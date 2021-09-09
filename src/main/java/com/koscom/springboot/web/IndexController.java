@@ -1,5 +1,6 @@
 package com.koscom.springboot.web;
 
+import com.koscom.springboot.config.auth.dto.SessionUser;
 import com.koscom.springboot.service.PostsService;
 import com.koscom.springboot.web.dto.posts.PostsResponseDto;
 import com.koscom.springboot.web.dto.posts.PostsSaveRequestDto;
@@ -10,19 +11,26 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpSession;
+
 @RequiredArgsConstructor
 @Controller
 public class IndexController {
 
-    private final PostsService postsService;
+       private final PostsService postsService;
+    private final HttpSession httpSession;
 
     @GetMapping("/")
     public String index(Model model) {
         postsService.save(new PostsSaveRequestDto("test", "test", "test"));
         model.addAttribute("posts", postsService.findAllDesc());
+
+        SessionUser user = (SessionUser) httpSession.getAttribute("user"); // (1)
+        if (user != null) { // (2)
+            model.addAttribute("userName", user.getName());
+        }
         return "index";
     }
-
 
     @GetMapping("/posts/save")
     public String postsSave(){
