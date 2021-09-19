@@ -9,7 +9,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
@@ -17,6 +16,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.List;
@@ -24,26 +24,26 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT) // 랜덤포트생성해서 테스트해볼수있게지원해주는옵션
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@TestPropertySource(properties = {"security.enabled=false"})
 public class PostsApiControllerTest {
 
-    @LocalServerPort //포트지정
+    @LocalServerPort
     private int port;
 
     @Autowired
-    private TestRestTemplate restTemplate; //테스트용 레스트템플릿임.
+    private TestRestTemplate restTemplate; // 테스트용 RestTemplate
 
     @Autowired
     PostRepository postRepository;
 
     @AfterEach
-    void tearDown(){
+    void tearDown() {
         postRepository.deleteAll();
-
     }
 
     @Test
-    void API를_통해서_Posts가_등록된다(){
+    void API를_통해서_Posts가_등록된다() {
         //given
         String title = "title";
         String content = "content";
@@ -54,20 +54,19 @@ public class PostsApiControllerTest {
                 .build();
 
         String url = "http://localhost:" + port + "/api/v1/posts";
-        //http://localhost:5700/api/v1/posts;
+        // http://localhost:5700/api/v1/posts;
 
         //when
         ResponseEntity<Long> responseEntity = restTemplate.postForEntity(url, requestDto, Long.class);
 
         //then
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(responseEntity.getBody()).isGreaterThan(0L); //auto increament 되어있으면 1이상
+        assertThat(responseEntity.getBody()).isGreaterThan(0L); // auto increment 되어있으면 1이상
 
         List<Posts> all = postRepository.findAll();
         assertThat(all.get(0).getTitle()).isEqualTo(title);
         assertThat(all.get(0).getContent()).isEqualTo(content);
     }
-
 
     @Test
     public void Posts_수정된다() throws Exception {
@@ -102,6 +101,7 @@ public class PostsApiControllerTest {
         assertThat(all.get(0).getTitle()).isEqualTo(expectedTitle);
         assertThat(all.get(0).getContent()).isEqualTo(expectedContent);
     }
+
     @Test
     public void Posts_1건_조회된다() throws Exception {
         //given
@@ -112,7 +112,6 @@ public class PostsApiControllerTest {
                 .build());
 
         Long updateId = savedPosts.getId();
-
         String url = "http://localhost:" + port + "/api/v1/posts/"+ updateId;
 
         //when
@@ -120,7 +119,8 @@ public class PostsApiControllerTest {
 
         //then
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(responseEntity.getBody().getId()).isEqualTo(updateId);
-        assertThat(responseEntity.getBody().getTitle()).isEqualTo("title");
+        PostsResponseDto body = responseEntity.getBody();
+        assertThat(body.getId()).isEqualTo(updateId);
+        assertThat(body.getTitle()).isEqualTo("title");
     }
 }

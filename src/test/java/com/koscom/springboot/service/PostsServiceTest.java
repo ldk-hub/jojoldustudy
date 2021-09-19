@@ -13,6 +13,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,24 +22,48 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class PostsServiceTest {
 
     @Autowired
-    PostRepository postRepository;
+    PostRepository postsRepository;
 
     @Autowired
     PostsService postsService;
 
     @AfterEach
-    void tearDown(){
-        //postRepository.deleteAllInBatch(); //delete from table
-        postRepository.deleteAll();  // JPA상태를 보고 자식 테이블까지 삭제할지 결정
+    void tearDown() {
+        postsRepository.deleteAll(); // JPA 상태를 보고, 자식 테이블까지 삭제할지 결정
+    }
+
+    @Test
+    void postsService를통해서_저장이된다() {
+        String title = "test";
+        String content = "test2";
+        PostsSaveRequestDto dto = PostsSaveRequestDto.builder()
+                .title(title)
+                .content(content)
+                .build();
+
+        postsService.save(dto);
+
+        System.out.println("save >>>>>>>>>>>>>");
+
+        List<Posts> result = postsRepository.findAll();
+
+        System.out.println("findAll >>>>>>>>>>>>>");
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getTitle()).isEqualTo(title);
+        assertThat(result.get(0).getContent()).isEqualTo(content);
     }
 
     @Test
     void postsService를통해서_수정이된다() {
         // 미리 저장된 값을 하나 생성해둠 ("1", "2");
-        Posts save = postRepository.save(Posts.builder()
+        Posts save = postsRepository.save(Posts.builder()
                 .title("1")
                 .content("2")
                 .build());
+
+        System.out.println("save.title=" + save.getTitle());
+        System.out.println("save.content=" + save.getContent());
 
         String title = "test";
         String content = "test2";
@@ -50,7 +75,7 @@ public class PostsServiceTest {
 
         postsService.update(save.getId(), dto);
 
-        List<Posts> result = postRepository.findAll();
+        List<Posts> result = postsRepository.findAll();
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getTitle()).isEqualTo(title);
@@ -60,24 +85,64 @@ public class PostsServiceTest {
     @Test
     void Posts를_수정하면_수정시간이_갱신된다() {
         // 미리 저장된 값을 하나 생성해둠 ("1", "2");
-        Posts save = postRepository.save(Posts.builder()
+        Posts save = postsRepository.save(Posts.builder()
                 .title("1")
                 .content("2")
                 .build());
         LocalDateTime beforeTime = save.getModifiedDate();
 
         System.out.println("beforeTime=" + beforeTime);
-
         postsService.update(save.getId(), PostsUpdateRequestDto.builder()
                 .title("test")
                 .content("test2")
                 .build());
 
-        List<Posts> result = postRepository.findAll();
+        List<Posts> result = postsRepository.findAll();
         LocalDateTime newTime = result.get(0).getModifiedDate();
 
         System.out.println("newTime="+newTime);
         assertThat(newTime).isAfter(beforeTime);
     }
 
+    @Test
+    void postsService를통해서_삭제가_된다() {
+        // 미리 저장된 값을 하나 생성해둠 ("1", "2");
+        Posts save = postsRepository.save(Posts.builder()
+                .title("1")
+                .content("2")
+                .build());
+
+        // 해당 save id로 삭제
+        postsService.delete(save.getId());
+
+        // 삭제 후, 조회시
+        List<Posts> result = postsRepository.findAll();
+
+        // 아무것도 없어야 함
+        assertThat(result).hasSize(0);
+    }
+
+    @Test
+    void id가_일치해야만_삭제가된다() {
+        // 미리 저장된 값을 하나 생성해둠 ("1", "2");
+        Posts save = postsRepository.save(Posts.builder()
+                .title("1")
+                .content("2")
+                .build());
+
+        Posts deleteTarget = postsRepository.save(Posts.builder()
+                .title("1")
+                .content("2")
+                .build());
+
+        // 해당 save id로 삭제
+        postsService.delete(deleteTarget.getId());
+
+        // 삭제 후, 조회시
+        Optional<Posts> byId = postsRepository.findById(deleteTarget.getId());
+
+        // 아무것도 없어야 함
+        // isPresent() => Posts가 null이 아니고 값이 있는 상태야? true: false
+        assertThat(byId.isPresent()).isFalse();
+    }
 }

@@ -1,55 +1,55 @@
 package com.koscom.springboot.web;
-
-import com.koscom.springboot.domain.posts.Posts;
-import com.koscom.springboot.web.dto.posts.PostsResponseDto;
+import com.koscom.springboot.config.auth.SecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.http.ResponseEntity;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
-
-import java.net.URI;
-
 import static org.hamcrest.Matchers.is;
-
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@ExtendWith(SpringExtension.class) //(1)
-@WebMvcTest(controllers = HelloController.class) //Controller만 테스트 & HelloController 만 테스트
+@ExtendWith(SpringExtension.class)
+@WebMvcTest(controllers = HelloController.class,
+        excludeFilters = {
+                @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class)
+        }
+)
 public class HelloControllerTest {
-    @Autowired // (3)
-    private MockMvc mvc; //(4)
 
+    @Autowired
+    MockMvc mvc;
 
-
+    @WithMockUser(roles = "USER") // MockMvc
     @Test
-    public void hello가_리턴된다() throws Exception {
-        String hello = "hello";
+    void hello주소로요청이오면_hello가_리턴된다() throws Exception {
+        String expectResult = "hello";
 
-        mvc.perform(get("/hello")) // (5)
-                .andExpect(status().isOk()) // (6)
-                .andExpect(content().string(hello)); // (7)
+        mvc.perform(get("/hello"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(expectResult));
     }
-    //정상처리케이스
+
+    @WithMockUser(roles = "USER")
     @Test
-    public void helloDto가_리턴된다() throws Exception {
+    void helloDto가_리턴된다() throws Exception {
         String name = "hello";
         int amount = 1000;
 
-        mvc.perform(
-                        get("/hello/dto")
-                                .param("name", name) // (1)
-                                .param("amount", String.valueOf(amount)))
+        mvc.perform(get("/hello/dto")
+                        .param("name", name)
+                        .param("amount", String.valueOf(amount)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name", is(name))) // (2)
+                .andExpect(jsonPath("$.name", is(name)))
                 .andExpect(jsonPath("$.amount", is(amount)));
     }
 
-    //예외발생시처리
+    @WithMockUser(roles = "USER")
     @Test
     void amount가없으면_응답코드가400이_된다() throws Exception {
         String name = "hello";
@@ -58,6 +58,4 @@ public class HelloControllerTest {
                         .param("name", name))
                 .andExpect(status().isBadRequest());
     }
-
-
 }
